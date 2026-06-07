@@ -1,8 +1,58 @@
 # VPS Control Bot Oneclick
 
-VPS Control Bot Oneclick は、小規模な Ubuntu/Debian VPS 向けのセルフホスト型 Telegram 管理パネルです。対話式の `curl` コマンドひとつでインストールでき、Telegram から VPS の状態、サービス、通信量、ログ、購読リンク、Cloudflare 優先 IP 状態、安全クリーンアップを確認できます。
+![VPS Control Bot Oneclick](images/hero.svg)
 
-## クイックインストール
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
+[![Install](https://img.shields.io/badge/install-curl%20%7C%20bash-0f766e.svg)](../install.sh)
+[![Python](https://img.shields.io/badge/python-3.x-blue.svg)](../src/bot.py)
+[![Systemd](https://img.shields.io/badge/runtime-systemd-334155.svg)](../systemd/)
+
+VPS Control Bot Oneclick は、小規模な Ubuntu/Debian VPS 向けのセルフホスト型 Telegram 管理パネルです。状態確認、サービス監視、3X-UI 通信量、購読リンク、Cloudflare 優先 IP 状態、ログ、バックアップ、安全クリーンアップを Telegram から操作できます。
+
+この README の構成は、[hotyue/IP-Sentinel](https://github.com/hotyue/IP-Sentinel) とその [インストール・アップグレードガイド](https://blog.iot-architect.com/engineering-practice/ip-sentinel-installation-and-upgrade-guide/) の「導入手順を先に明確にする」スタイルを参考にしています。本プロジェクトのコードは独立したものです。
+
+## プレビュー
+
+![Telegram panel preview](images/panel-preview.svg)
+
+## 主な機能
+
+| 項目 | 内容 |
+| --- | --- |
+| 管理パネル | `/start`, `/panel` |
+| システム状態 | `/status` で負荷、メモリ、ディスク、Swap、TCP/BBR |
+| サービス | `/services` で systemd と Docker |
+| 3X-UI | `/traffic`, `/nodes` |
+| 購読 | `/sub` |
+| ヘルスチェック | `/check` |
+| Cloudflare | `/cf_status`, `/cf_optimize` |
+| クリーンアップ | `/cleanup_status`, `/cleanup` |
+| ログとバックアップ | `/logs nginx`, `/logs xui`, `/backup` |
+
+## アーキテクチャ
+
+![Architecture](images/architecture.svg)
+
+秘密情報は VPS 上のみに保存されます。
+
+```bash
+/etc/vps-control-bot.env
+```
+
+GitHub には Bot Token、Telegram ID、VPS IP、プライベートドメイン、購読 token を保存しないでください。
+
+## 要件
+
+- Debian / Ubuntu VPS
+- root 権限
+- GitHub Raw へアクセス可能
+- Python 3
+- systemd
+- curl
+
+## インストール
+
+![Install flow](images/install-flow.svg)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/shangguanwt/vps-control-bot-oneclick/main/install.sh | sudo bash
@@ -10,34 +60,34 @@ curl -fsSL https://raw.githubusercontent.com/shangguanwt/vps-control-bot-oneclic
 
 インストーラーは次の値を確認します。
 
-- Telegram Bot Token
-- 許可する Telegram ユーザー ID
-- VPS 表示名
-- 任意の購読ベース URL
-- 任意のヘルスチェック URL
-- 任意の Cloudflare テスト用ホスト名
+| 設定 | 説明 |
+| --- | --- |
+| `BOT_TOKEN` | Telegram Bot Token |
+| `ALLOWED_TELEGRAM_IDS` | 許可する Telegram ユーザー ID |
+| `VPS_DISPLAY_NAME` | Telegram 上の表示名 |
+| `SUB_BASE` | 任意の購読ベース URL |
+| `CHECK_URLS` | 任意のヘルスチェック URL |
+| `CF_TEST_HOST` | 任意の Cloudflare テストホスト |
+| `XUI_DB` | 既定値 `/etc/x-ui/x-ui.db` |
+| `SUB_GENERATOR` | 既定値 `/etc/proxy-subscription/generate.py` |
 
-秘密情報は VPS 上の次のファイルにのみ保存されます。
+インストール後、Telegram で bot に送信します。
 
-```bash
-/etc/vps-control-bot.env
+```text
+/start
 ```
 
-## 主なコマンド
+## 確認
 
-- `/start`, `/panel` - 管理パネルを開く
-- `/status` - 負荷、メモリ、ディスク、TCP/BBR
-- `/services` - systemd サービスと Docker コンテナ
-- `/traffic` - 3X-UI の通信量
-- `/sub` - 購読 URL
-- `/check` - URL の疎通確認
-- `/cf_status` - Cloudflare 優先 IP の状態
-- `/cleanup_status` - 安全クリーンアップの状態
-- `/cleanup` - 確認後に安全クリーンアップを実行
+```bash
+systemctl is-active vps-control-bot
+systemctl is-active vps-safe-cleanup.timer
+systemctl status vps-control-bot --no-pager
+```
 
 ## 安全クリーンアップ
 
-`vps-safe-cleanup.timer` が毎時実行され、復元可能なキャッシュやログだけを削除します。
+`vps-safe-cleanup.timer` が毎時実行され、復元可能なデータのみを削除します。
 
 - systemd journal
 - APT キャッシュ
@@ -57,6 +107,22 @@ curl -fsSL https://raw.githubusercontent.com/shangguanwt/vps-control-bot-oneclic
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/shangguanwt/vps-control-bot-oneclick/main/install.sh | sudo bash -s -- --uninstall
+```
+
+## トラブルシューティング
+
+bot が返信しない場合:
+
+```bash
+systemctl status vps-control-bot --no-pager
+journalctl -u vps-control-bot -n 80 --no-pager
+```
+
+クリーンアップ timer を確認する場合:
+
+```bash
+systemctl list-timers --all vps-safe-cleanup.timer --no-pager
+journalctl -u vps-safe-cleanup.service -n 50 --no-pager
 ```
 
 ## セキュリティ

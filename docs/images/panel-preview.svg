@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620" role="img" aria-label="Telegram panel preview">
+  <rect width="1000" height="620" fill="#e2e8f0"/>
+  <rect x="250" y="46" width="500" height="528" rx="34" fill="#0f172a"/>
+  <rect x="278" y="92" width="444" height="430" rx="22" fill="#f8fafc"/>
+  <text x="310" y="138" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#0f172a">VPS 控制台</text>
+  <text x="310" y="178" font-family="Segoe UI,Arial,sans-serif" font-size="16" fill="#334155">目标锁定  My VPS</text>
+  <text x="310" y="206" font-family="Segoe UI,Arial,sans-serif" font-size="16" fill="#334155">核心服务  6/6 active</text>
+  <text x="310" y="234" font-family="Segoe UI,Arial,sans-serif" font-size="16" fill="#334155">内存  378MB available</text>
+  <rect x="310" y="274" width="170" height="46" rx="10" fill="#0ea5e9"/><text x="362" y="304" fill="#fff" font-family="Segoe UI,Arial" font-size="16" font-weight="700">状态</text>
+  <rect x="500" y="274" width="170" height="46" rx="10" fill="#0284c7"/><text x="552" y="304" fill="#fff" font-family="Segoe UI,Arial" font-size="16" font-weight="700">服务</text>
+  <rect x="310" y="340" width="170" height="46" rx="10" fill="#0f766e"/><text x="346" y="370" fill="#fff" font-family="Segoe UI,Arial" font-size="16" font-weight="700">节点与订阅</text>
+  <rect x="500" y="340" width="170" height="46" rx="10" fill="#0d9488"/><text x="538" y="370" fill="#fff" font-family="Segoe UI,Arial" font-size="16" font-weight="700">巡检报告</text>
+  <rect x="310" y="406" width="170" height="46" rx="10" fill="#475569"/><text x="366" y="436" fill="#fff" font-family="Segoe UI,Arial" font-size="16" font-weight="700">日志</text>
+  <rect x="500" y="406" width="170" height="46" rx="10" fill="#334155"/><text x="558" y="436" fill="#fff" font-family="Segoe UI,Arial" font-size="16" font-weight="700">维护</text>
+  <rect x="310" y="480" width="360" height="16" rx="8" fill="#cbd5e1"/>
+  <circle cx="500" cy="552" r="8" fill="#94a3b8"/>
+</svg>

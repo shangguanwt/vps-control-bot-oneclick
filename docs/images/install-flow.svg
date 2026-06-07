@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-label="Install flow">
+  <style>
+    .title{font:700 32px Segoe UI,Arial,sans-serif;fill:#111827}
+    .step{font:700 22px Segoe UI,Arial,sans-serif;fill:#0f172a}
+    .text{font:16px Segoe UI,Arial,sans-serif;fill:#475569}
+    .code{font:15px Consolas,Menlo,monospace;fill:#0f766e}
+    .card{fill:#ffffff;stroke:#38bdf8;stroke-width:2}
+    .num{fill:#0ea5e9}
+    .arrow{stroke:#64748b;stroke-width:3;fill:none;marker-end:url(#arrow)}
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#64748b"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="420" fill="#f8fafc"/>
+  <text x="60" y="66" class="title">Deployment and upgrade flow</text>
+  <g transform="translate(70 120)">
+    <rect width="220" height="170" rx="18" class="card"/>
+    <circle cx="42" cy="42" r="22" class="num"/><text x="35" y="50" fill="#fff" font-family="Segoe UI,Arial" font-size="22" font-weight="700">1</text>
+    <text x="30" y="88" class="step">Prepare</text>
+    <text x="30" y="120" class="text">Create a Telegram bot</text>
+    <text x="30" y="148" class="text">Get your Telegram ID</text>
+  </g>
+  <path d="M300 205 H380" class="arrow"/>
+  <g transform="translate(390 120)">
+    <rect width="220" height="170" rx="18" class="card"/>
+    <circle cx="42" cy="42" r="22" class="num"/><text x="35" y="50" fill="#fff" font-family="Segoe UI,Arial" font-size="22" font-weight="700">2</text>
+    <text x="30" y="88" class="step">Install</text>
+    <text x="30" y="120" class="code">curl ... | sudo bash</text>
+    <text x="30" y="148" class="text">Answer prompts</text>
+  </g>
+  <path d="M620 205 H700" class="arrow"/>
+  <g transform="translate(710 120)">
+    <rect width="220" height="170" rx="18" class="card"/>
+    <circle cx="42" cy="42" r="22" class="num"/><text x="35" y="50" fill="#fff" font-family="Segoe UI,Arial" font-size="22" font-weight="700">3</text>
+    <text x="30" y="88" class="step">Verify</text>
+    <text x="30" y="120" class="code">systemctl status</text>
+    <text x="30" y="148" class="text">Send /start in Telegram</text>
+  </g>
+  <path d="M940 205 H1020" class="arrow"/>
+  <g transform="translate(1030 120)">
+    <rect width="120" height="170" rx="18" class="card"/>
+    <circle cx="42" cy="42" r="22" class="num"/><text x="35" y="50" fill="#fff" font-family="Segoe UI,Arial" font-size="22" font-weight="700">4</text>
+    <text x="24" y="88" class="step">Run</text>
+    <text x="24" y="120" class="text">Monitor</text>
+    <text x="24" y="148" class="text">Update</text>
+  </g>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-label="Architecture diagram">
+  <style>
+    .title{font:700 34px Segoe UI,Arial,sans-serif;fill:#0f172a}
+    .label{font:700 22px Segoe UI,Arial,sans-serif;fill:#0f172a}
+    .text{font:16px Segoe UI,Arial,sans-serif;fill:#334155}
+    .code{font:15px Consolas,Menlo,monospace;fill:#0f766e}
+    .box{fill:#f8fafc;stroke:#0ea5e9;stroke-width:2}
+    .soft{fill:#ecfeff;stroke:#06b6d4;stroke-width:2}
+    .arrow{stroke:#334155;stroke-width:3;fill:none;marker-end:url(#arrow)}
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#334155"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="620" fill="#ffffff"/>
+  <text x="60" y="70" class="title">How the one-click VPS control stack works</text>
+  <rect x="70" y="130" width="250" height="150" rx="16" class="box"/>
+  <text x="100" y="175" class="label">Telegram</text>
+  <text x="100" y="210" class="text">Allowed user sends commands</text>
+  <text x="100" y="240" class="code">/status /cleanup /logs</text>
+  <rect x="470" y="118" width="270" height="174" rx="16" class="soft"/>
+  <text x="502" y="160" class="label">VPS Control Bot</text>
+  <text x="502" y="196" class="text">HTML cards and inline buttons</text>
+  <text x="502" y="226" class="text">No arbitrary shell endpoint</text>
+  <text x="502" y="256" class="code">/opt/vps-control-bot</text>
+  <rect x="880" y="78" width="250" height="120" rx="16" class="box"/>
+  <text x="910" y="120" class="label">Systemd</text>
+  <text x="910" y="154" class="text">services, timers, logs</text>
+  <rect x="880" y="248" width="250" height="120" rx="16" class="box"/>
+  <text x="910" y="290" class="label">3X-UI / Xray</text>
+  <text x="910" y="324" class="text">traffic and node metadata</text>
+  <rect x="880" y="418" width="250" height="120" rx="16" class="box"/>
+  <text x="910" y="460" class="label">Cleanup</text>
+  <text x="910" y="494" class="text">journal, temp, cache, logs</text>
+  <path d="M320 205 H470" class="arrow"/>
+  <path d="M740 174 C800 150 820 138 880 138" class="arrow"/>
+  <path d="M740 214 C802 244 822 292 880 306" class="arrow"/>
+  <path d="M740 254 C802 330 820 456 880 478" class="arrow"/>
+  <rect x="72" y="390" width="668" height="128" rx="16" fill="#f1f5f9" stroke="#94a3b8"/>
+  <text x="104" y="430" class="label">Configuration boundary</text>
+  <text x="104" y="466" class="text">Secrets live on the VPS only: /etc/vps-control-bot.env</text>
+  <text x="104" y="496" class="text">GitHub repository contains templates and code, not your token, IP, or domain.</text>
+</svg>
