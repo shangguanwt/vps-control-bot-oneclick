@@ -1,0 +1,16 @@
+[Unit]
+Description=Telegram VPS control bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/vps-control-bot.env
+WorkingDirectory=/opt/vps-control-bot
+ExecStart=/usr/bin/python3 /opt/vps-control-bot/bot.py
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target

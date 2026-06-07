@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import os
+import subprocess
+import time
+from pathlib import Path
+
+STATE_FILE = Path("/var/log/vps-safe-cleanup-last.json")
+LOG_FILE = Path("/var/log/vps-safe-cleanup.log")
+JOURNAL_MAX_SIZE = os.environ.get("CLEANUP_JOURNAL_MAX_SIZE", "200M")
+JOURNAL_MAX_AGE = os.environ.get("CLEANUP_JOURNAL_MAX_AGE", "14d")
+TEMP_MAX_AGE_DAYS = int(os.environ.get("CLEANUP_TEMP_MAX_AGE_DAYS", "2"))
+DOCKER_LOG_MAX_MB = int(os.environ.get("CLEANUP_DOCKER_LOG_MAX_MB", "50"))
+MIN_AVAILABLE_MB = int(os.environ.get("CLEANUP_MIN_AVAILABLE_MB", "180"))
+MAX_SWAP_PERCENT = float(os.environ.get("CLEANUP_MAX_SWAP_PERCENT", "60"))
+
+
+def run(cmd, timeout=60):
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=timeout)
+    return proc.returncode, proc.stdout.strip()
+
+
+def append_log(message):
+    stamp = time.strftime("%Y-%m-%d %H:%M:%S %z")
+    with LOG_FILE.open("a", encoding="utf-8") as f:
+        f.write(f"[{stamp}] {message}\n")
+
+
+def meminfo():
+    values = {}
+    for raw in Path("/proc/meminfo").read_text(encoding="utf-8", errors="ignore").splitlines():
+        key, _, rest = raw.partition(":")
+        parts = rest.strip().split()
+        if parts and parts[0].isdigit():
+            values[key] = int(parts[0]) * 1024
+    total = values.get("MemTotal", 0)
+    available = values.get("MemAvailable", 0)
+    swap_total = values.get("SwapTotal", 0)
+    swap_free = values.get("SwapFree", 0)
+    swap_used = max(0, swap_total - swap_free)
+    return {
+        "mem_total": total,
+        "mem_available": available,
+        "mem_available_mb": round(available / 1024 / 1024, 1),
+        "mem_used_percent": round((total - available) / total * 100, 1) if total else 0,
+        "swap_total": swap_total,
+        "swap_used": swap_used,
+        "swap_used_mb": round(swap_used / 1024 / 1024, 1),
+        "swap_used_percent": round(swap_used / swap_total * 100, 1) if swap_total else 0,
+    }
+
+
+def disk_root():
+    code, out = run(["df", "-B1", "/"], 15)
+    if code != 0:
+        return {"error": out}
+    lines = out.splitlines()
+    if len(lines) < 2:
+        return {"error": out}
+    parts = lines[1].split()
+    if len(parts) < 5:
+        return {"error": out}
+    return {
+        "used": int(parts[2]),
+        "total": int(parts[1]),
+        "available": int(parts[3]),
+        "used_percent": parts[4],
+    }
+
+
+def journal_usage():
+    code, out = run(["journalctl", "--disk-usage"], 20)
+    return out if code == 0 else f"unavailable: {out}"
+
+
+def cleanup_temp(actions):
+    for folder in ("/tmp", "/var/tmp"):
+        if not Path(folder).exists():
+            continue
+        cmd = [
+            "find", folder, "-xdev",
+            "(", "-type", "f", "-o", "-type", "l", ")",
+            "-mtime", f"+{TEMP_MAX_AGE_DAYS}", "-delete",
+        ]
+        code, out = run(cmd, 60)
+        actions.append({"name": f"clean old temp files in {folder}", "ok": code == 0, "output": out[-500:]})
+        code, out = run(["find", folder, "-xdev", "-depth", "-type", "d", "-empty", "-mtime", f"+{TEMP_MAX_AGE_DAYS}", "-delete"], 60)
+        actions.append({"name": f"clean empty temp dirs in {folder}", "ok": code == 0, "output": out[-500:]})
+
+
+def cleanup_journal(actions):
+    for arg in (f"--vacuum-size={JOURNAL_MAX_SIZE}", f"--vacuum-time={JOURNAL_MAX_AGE}"):
+        code, out = run(["journalctl", arg], 90)
+        actions.append({"name": f"journalctl {arg}", "ok": code == 0, "output": out[-800:]})
+
+
+def cleanup_apt(actions):
+    if not Path("/usr/bin/apt-get").exists():
+        return
+    code, out = run(["apt-get", "clean"], 90)
+    actions.append({"name": "apt-get clean", "ok": code == 0, "output": out[-500:]})
+
+
+def cleanup_docker_logs(actions):
+    root = Path("/var/lib/docker/containers")
+    if not root.exists():
+        return
+    truncated = []
+    limit = DOCKER_LOG_MAX_MB * 1024 * 1024
+    for path in root.glob("*/*-json.log"):
+        try:
+            size = path.stat().st_size
+            if size > limit:
+                with path.open("w", encoding="utf-8"):
+                    pass
+                truncated.append({"file": str(path), "bytes_before": size})
+        except Exception as exc:
+            actions.append({"name": f"truncate docker log {path}", "ok": False, "output": str(exc)})
+    actions.append({"name": f"truncate docker json logs over {DOCKER_LOG_MAX_MB}MB", "ok": True, "output": json.dumps(truncated, ensure_ascii=False)})
+
+
+def drop_caches(actions, force=False):
+    before = meminfo()
+    should_drop = (
+        force
+        or before["mem_available_mb"] < MIN_AVAILABLE_MB
+        or before["swap_used_percent"] >= MAX_SWAP_PERCENT
+    )
+    if not should_drop:
+        actions.append({
+            "name": "drop page cache",
+            "ok": True,
+            "skipped": True,
+            "output": f"available={before['mem_available_mb']}MB swap={before['swap_used_percent']}%",
+        })
+        return
+    run(["sync"], 30)
+    try:
+        Path("/proc/sys/vm/drop_caches").write_text("3\n", encoding="utf-8")
+        actions.append({"name": "drop page cache", "ok": True, "output": "sync; echo 3 > /proc/sys/vm/drop_caches"})
+    except Exception as exc:
+        actions.append({"name": "drop page cache", "ok": False, "output": str(exc)})
+
+
+def load_last():
+    try:
+        return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def cleanup(force=False):
+    before = {
+        "memory": meminfo(),
+        "disk": disk_root(),
+        "journal": journal_usage(),
+    }
+    actions = []
+    cleanup_journal(actions)
+    cleanup_apt(actions)
+    cleanup_temp(actions)
+    cleanup_docker_logs(actions)
+    drop_caches(actions, force=force)
+    after = {
+        "memory": meminfo(),
+        "disk": disk_root(),
+        "journal": journal_usage(),
+    }
+    payload = {
+        "ok": all(item.get("ok", False) for item in actions),
+        "forced": force,
+        "ran_at": int(time.time()),
+        "before": before,
+        "after": after,
+        "actions": actions,
+    }
+    STATE_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    append_log(f"cleanup ok={payload['ok']} forced={force} before_avail={before['memory']['mem_available_mb']}MB after_avail={after['memory']['mem_available_mb']}MB")
+    return payload
+
+
+def status():
+    return {
+        "now": int(time.time()),
+        "current": {
+            "memory": meminfo(),
+            "disk": disk_root(),
+            "journal": journal_usage(),
+        },
+        "last": load_last(),
+        "policy": {
+            "timer": "hourly",
+            "journal_max_size": JOURNAL_MAX_SIZE,
+            "journal_max_age": JOURNAL_MAX_AGE,
+            "temp_max_age_days": TEMP_MAX_AGE_DAYS,
+            "docker_log_max_mb": DOCKER_LOG_MAX_MB,
+            "min_available_mb": MIN_AVAILABLE_MB,
+            "max_swap_percent": MAX_SWAP_PERCENT,
+        },
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--status", action="store_true")
+    parser.add_argument("--force", action="store_true")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args()
+    payload = status() if args.status else cleanup(force=args.force)
+    print(json.dumps(payload, ensure_ascii=False, indent=2) if args.json else json.dumps(payload, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

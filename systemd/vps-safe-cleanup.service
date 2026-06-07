@@ -1,0 +1,10 @@
+[Unit]
+Description=VPS safe cleanup
+Documentation=man:systemd.timer(5)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/vps-safe-cleanup
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
