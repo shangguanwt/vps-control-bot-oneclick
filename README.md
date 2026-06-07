@@ -1,4 +1,4 @@
-﻿# VPS Control Bot Oneclick
+# VPS Control Bot Oneclick
 
 Self-hosted Telegram VPS control panel with one-command deployment.
 

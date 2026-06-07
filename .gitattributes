@@ -1,0 +1,9 @@
+* text=auto eol=lf
+
+*.sh text eol=lf
+install.sh text eol=lf
+src/bot.py text eol=lf
+src/vps-safe-cleanup text eol=lf
+systemd/* text eol=lf
+*.md text eol=lf
+LICENSE text eol=lf

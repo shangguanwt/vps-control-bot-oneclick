@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 REPO="${REPO:-shangguanwt/vps-control-bot-oneclick}"

@@ -1,4 +1,4 @@
-﻿# VPS Control Bot Oneclick
+# VPS Control Bot Oneclick
 
 VPS Control Bot Oneclick is a self-hosted Telegram control panel for small Ubuntu/Debian VPS servers. It can be installed with a single interactive `curl` command and gives you status, services, traffic, logs, subscription links, Cloudflare best-IP status, and safe cleanup reports from Telegram.
 
